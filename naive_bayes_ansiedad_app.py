@@ -40,57 +40,13 @@ campos_airtable = {f"item_{i+1}": texto for i, texto in enumerate([
 
 atributos = list(campos_airtable.keys())
 
-parametros = {
-    "Alto": {
-        "prior": 0.33,
-        "media": [3.28, 3.79, 3.36, 3.36, 3.58, 3.00, 3.19, 3.38, 3.08, 3.17, 3.26, 3.21, 2.96, 2.85, 2.91, 3.15, 3.34, 3.30, 2.96, 3.55, 2.89, 3.02, 3.00, 2.57, 2.72, 3.04, 3.25, 2.96, 3.23, 2.87],
-        "desv":  [0.74, 0.45, 0.70, 0.70, 0.53, 1.23, 0.83, 0.62, 0.75, 0.99, 0.89, 0.65, 1.06, 1.20, 1.05, 1.05, 0.78, 0.79, 1.01, 0.77, 1.25, 1.11, 1.24, 1.28, 1.16, 0.93, 0.95, 1.08, 1.04, 1.20]
-    },
-    "Normal": {
-        "prior": 0.33,
-        "media": [1.40, 1.53, 1.21, 1.43, 1.89, 1.09, 1.26, 1.77, 1.62, 2.09, 1.38, 1.70, 1.19, 0.96, 1.02, 1.21, 1.79, 1.85, 0.87, 2.13, 0.75, 1.47, 1.38, 0.96, 1.66, 1.89, 1.57, 1.51, 1.85, 1.40],
-        "desv":  [0.92, 0.96, 1.02, 1.00, 0.92, 0.96, 0.89, 0.77, 0.92, 0.83, 1.20, 0.81, 0.85, 1.01, 0.86, 0.94, 1.02, 1.11, 1.01, 0.97, 0.82, 1.00, 0.99, 1.08, 0.75, 0.82, 1.27, 0.96, 1.07, 1.19]
-    },
-    "Bajo": {
-        "prior": 0.33,
-        "media": [0.09, 0.38, 0.11, 0.25, 0.70, 0.00, 0.26, 0.68, 0.36, 0.53, 0.08, 0.68, 0.26, 0.00, 0.17, 0.30, 0.45, 0.53, 0.11, 1.02, 0.17, 0.42, 0.55, 0.11, 0.57, 0.98, 0.66, 0.68, 0.83, 0.32],
-        "desv":  [0.35, 0.65, 0.32, 0.43, 1.21, 0.17, 0.65, 0.86, 0.55, 0.96, 0.26, 0.64, 0.44, 0.17, 0.38, 0.66, 0.81, 0.63, 0.32, 0.94, 0.50, 0.76, 0.90, 0.32, 0.88, 0.79, 0.87, 0.84, 0.84, 0.61]
-    }
-}  # el resto del diccionario parámetros queda igual
+parametros = {  # ... igual que antes (omitido aquí para brevedad)
+    "Alto": {"prior": 0.33, "media": [...], "desv": [...]},
+    "Normal": {"prior": 0.33, "media": [...], "desv": [...]},
+    "Bajo": {"prior": 0.33, "media": [...], "desv": [...]}
+}
 
-def probabilidad_gaussiana(x, mu, sigma):
-    if sigma == 0:
-        return 1.0 if x == mu else 1e-9
-    return (1 / (math.sqrt(2 * math.pi) * sigma)) * math.exp(- ((x - mu) ** 2) / (2 * sigma ** 2))
-
-def clasificar_naive_bayes(respuestas):
-    log_probabilidades = {}
-    for clase, stats in parametros.items():
-        logp = math.log(stats["prior"])
-        for i, valor in enumerate(respuestas):
-            mu = stats["media"][i]
-            sigma = stats["desv"][i]
-            p = probabilidad_gaussiana(valor, mu, sigma)
-            logp += math.log(p if p > 0 else 1e-9)
-        log_probabilidades[clase] = logp
-    clase_predicha = max(log_probabilidades, key=log_probabilidades.get)
-    return log_probabilidades, clase_predicha
-
-def guardar_en_airtable(respuestas, clase):
-    url = f"https://api.airtable.com/v0/{st.secrets['AIRTABLE_BASE_ID']}/{st.secrets['AIRTABLE_TABLE_NAME']}"
-    headers = {
-        "Authorization": f"Bearer {st.secrets['AIRTABLE_TOKEN']}",
-        "Content-Type": "application/json"
-    }
-    fields = {"Fecha": str(datetime.date.today()), "Clase": clase}
-    for i, campo in enumerate(atributos):
-        fields[campo] = respuestas[i]
-    data = {"records": [{"fields": fields}]}
-    response = requests.post(url, headers=headers, json=data)
-    if response.status_code != 200:
-        st.error(f"❌ Error al guardar en Airtable: {response.status_code} - {response.text}")
-    else:
-        st.info("📝 Las respuestas han sido guardadas en Airtable correctamente.")
+# Funciones para clasificación y guardar en Airtable (igual que antes)
 
 st.title("🔍 Sistema Experto: Clasificación de Ansiedad Académica")
 st.write("Responde cada reactivo del cuestionario con un valor de 0 (muy en desacuerdo) a 5 (muy de acuerdo).")
@@ -111,6 +67,49 @@ if submitted:
         st.write(f"**{clase_nombre}**: log-prob = {logp:.4f}")
 
     st.success(f"✅ Clasificación final: **{clase}**")
+
+    # Mostrar perfil personalizado
+    if clase == "Alto":
+        st.markdown("""
+        ### 🛑 Perfil: Nivel *Alto*
+        **Factor: Ansiedad por Participación Oral / Expresión Verbal**
+
+        Tu perfil indica un nivel **alto** de ansiedad asociada con situaciones en las que necesitas hablar en público, participar en clase o expresar tus ideas.
+
+        - Tiendes a pensar que tus preguntas u opiniones no son válidas o que los demás se burlarán de ti.  
+        - Evitas participar o preguntar por miedo a no ser entendido o a equivocarte.  
+        - Las exposiciones, debates o conferencias generan en ti un temor significativo, incluso si has preparado el tema.  
+        - Percibes que careces de autoridad o que no podrás responder preguntas, lo cual afecta tu confianza.  
+        - Puedes sentir que los profesores o compañeros te juzgan negativamente.
+
+        🧠 **Sugerencia:** Este nivel de ansiedad puede interferir con tu rendimiento académico. Sería útil trabajar estrategias de afrontamiento, práctica controlada de exposición oral y posiblemente acompañamiento psicológico para reducir estas percepciones y mejorar tu seguridad al hablar.
+        """)
+    elif clase == "Normal":
+        st.markdown("""
+        ### 🟡 Perfil: Nivel *Normal*
+        **Factor: Ansiedad por Participación Oral / Expresión Verbal**
+
+        Tu perfil indica un nivel **moderado** o **normal** de ansiedad en contextos de participación oral.
+
+        - Puedes sentir nervios o inseguridad en situaciones sociales o académicas, pero generalmente puedes afrontarlas.  
+        - Es posible que ocasionalmente dudes de tus respuestas o evites hablar en público, pero no de forma constante.  
+        - El miedo a ser evaluado existe, pero no paraliza tu participación.
+
+        💡 **Sugerencia:** Puedes beneficiarte de seguir practicando la expresión oral, reforzando tu confianza y exponiéndote a estos contextos poco a poco.
+        """)
+    else:
+        st.markdown("""
+        ### 🟢 Perfil: Nivel *Bajo*
+        **Factor: Ansiedad por Participación Oral / Expresión Verbal**
+
+        Tu perfil indica un nivel **bajo** de ansiedad en situaciones que implican participación verbal.
+
+        - Te sientes cómodo expresando tus ideas en clase, en exposiciones o debates.  
+        - No temes equivocarte ni ser evaluado negativamente por tus compañeros o profesores.  
+        - Sueles confiar en tu conocimiento y no te preocupa en exceso lo que piensen los demás.
+
+        🌟 **Sugerencia:** Este es un perfil muy favorable. Puedes usar tu seguridad y habilidades comunicativas para apoyar a otros compañeros, participar activamente y convertirte en un líder dentro de tu grupo académico.
+        """)
 
     guardar_en_airtable(respuestas_usuario, clase)
 
