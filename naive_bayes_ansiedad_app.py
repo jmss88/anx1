@@ -5,7 +5,7 @@ import requests
 import datetime
 
 # Mapeo de campos cortos a enunciados largos para la visualización
-campos_airtable = {f"item_{i+1}": texto for i, texto in enumerate([
+enunciados = [
     "Cuando tengo que dar una conferencia o exposición pienso que no tengo el conocimiento suficiente y que se van a burlar de mí por lo que voy a decir.",
     "Cuando expongo me da miedo que me hagan preguntas porque creo que no voy a saber qué responder, aunque sí haya estudiado el tema.",
     "Cuando participo en clase pienso que mi pregunta no es válida porque es una tontería",
@@ -36,8 +36,9 @@ campos_airtable = {f"item_{i+1}": texto for i, texto in enumerate([
     "Creo que mis compañeros me evalúan negativamente cuando doy mi opinión en clase.",
     "Cuando voy a presentar un examen oral pienso que no sé nada, aunque sí haya estudiado.",
     "Cuando platico con mis compañeros me da miedo que no me pongan atención."
-])}
+]
 
+campos_airtable = {f"item_{i+1}": texto for i, texto in enumerate(enunciados)}
 atributos = list(campos_airtable.keys())
 
 # Parámetros del modelo actualizados con datos reales
