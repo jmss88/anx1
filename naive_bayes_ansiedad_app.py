@@ -83,7 +83,7 @@ def guardar_en_airtable(respuestas, clase):
     }
     fields = {"Fecha": str(datetime.date.today()), "Clase": clase}
     for i, atributo in enumerate(atributos):
-        fields[f"item_{i+1}"] = respuestas[i]
+        fields[atributo] = respuestas[i]
     data = {"records": [{"fields": fields}]}
     response = requests.post(url, headers=headers, json=data)
     if response.status_code != 200:
