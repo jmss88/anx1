@@ -65,6 +65,7 @@ def probabilidad_gaussiana(x, mu, sigma):
         return 1.0 if x == mu else 1e-9
     return (1 / (math.sqrt(2 * math.pi) * sigma)) * math.exp(- ((x - mu) ** 2) / (2 * sigma ** 2))
 
+# Clasificación con Naive Bayes
 def clasificar_naive_bayes(respuestas):
     log_probabilidades = {}
     for clase, stats in parametros.items():
@@ -77,6 +78,8 @@ def clasificar_naive_bayes(respuestas):
         log_probabilidades[clase] = logp
     clase_predicha = max(log_probabilidades, key=log_probabilidades.get)
     return log_probabilidades, clase_predicha
+
+# Guardar en Airtable
 
 def guardar_en_airtable(respuestas, clase):
     url = f"https://api.airtable.com/v0/{st.secrets['AIRTABLE_BASE_ID']}/{st.secrets['AIRTABLE_TABLE_NAME']}"
@@ -94,17 +97,15 @@ def guardar_en_airtable(respuestas, clase):
     else:
         st.info("📝 Las respuestas han sido guardadas en Airtable correctamente.")
 
-# Cuestionario dividido en bloques de 10
-respuestas_usuario = []
-st.header("📝 Cuestionario")
-bloques = [enunciados[i:i+10] for i in range(0, len(enunciados), 10)]
+# Interfaz de usuario
+st.title("🔍 Sistema Experto: Clasificación de Ansiedad Académica")
+st.write("Responde cada reactivo del cuestionario con un valor de 0 (muy en desacuerdo) a 5 (muy de acuerdo).")
 
+respuestas_usuario = []
 with st.form("cuestionario"):
-    for bloque in bloques:
-        for texto in bloque:
-            val = st.slider(texto, 0, 5, 3)
-            respuestas_usuario.append(val)
-        st.markdown("---")
+    for clave, texto in campos_airtable.items():
+        val = st.slider(texto, 0, 5, 3)
+        respuestas_usuario.append(val)
     submitted = st.form_submit_button("Clasificar")
 
 if submitted:
@@ -117,6 +118,7 @@ if submitted:
     st.success(f"✅ Clasificación final: **{clase}**")
     guardar_en_airtable(respuestas_usuario, clase)
 
+    # Interpretación de perfil
     perfiles = {
         "Alto": "Tu perfil sugiere un nivel **alto** de ansiedad académica asociada a la expresión oral. Es probable que experimentes temor constante al juicio de los demás, incluso cuando estás preparado, y evites participar o exponer por miedo al ridículo o la desaprobación.",
         "Normal": "Tu perfil indica un nivel **moderado o normal** de ansiedad académica. Puedes experimentar algunas dudas o inseguridades en contextos académicos orales, pero no son persistentes ni interfieren gravemente en tu desempeño.",
@@ -133,12 +135,6 @@ if submitted:
     #### ℹ️ ¿Qué significa *log-prob*?
     El modelo usa logaritmos para calcular probabilidades de forma más estable.
     El valor más cercano a cero (menos negativo) indica la clase más probable.
-    """)
 
-    # Créditos y contacto
-    st.markdown("""
-    ---
-    **Desarrollado por:** José Manuel Sordo y ChatGPT, 2025  
-    **Contacto:** josman.sordo@gmail.com  
-    **Institución:** Facultad de Estudios Superiores Iztacala, UNAM
+    Dr. José Manuel Sánchez Sordo, Unidad de Evaluación Psicológica Iztacala, UNAM 2025.
     """)
