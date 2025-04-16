@@ -4,7 +4,7 @@ import streamlit as st
 import math
 
 atributos = [
-   "Cuando tengo que dar una conferencia, exposición o simposio pienso que no tengo el conocimiento suficiente y que se van a burlar de mí por lo que voy a decir.",
+   "Cuando tengo que dar una conferencia o exposición pienso que no tengo el conocimiento suficiente y que se van a burlar de mí por lo que voy a decir.",
     "Cuando expongo me da miedo que me hagan preguntas porque creo que no voy a saber qué responder, aunque sí haya estudiado el tema.",
     "Cuando participo en clase pienso que mi pregunta no es válida porque es una tontería",
     "Cuando expongo ante mi clase pienso que no me ponen atención porque carezco de autoridad ante mis compañeros.",
