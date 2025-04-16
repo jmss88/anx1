@@ -42,24 +42,17 @@ atributos = list(campos_airtable.keys())
 
 # Parámetros del modelo actualizados (reales o de ejemplo)
 parametros = {
-    "Alto": {
-        "prior": 0.33,
-        "media": [3.283, 3.7925, 3.3585, 3.3585, 3.5849, 3.0, 3.1887, 3.3774, 3.0755, 3.1698, 3.2642, 3.2075, 2.9623, 2.8491, 2.9057, 3.1509, 3.3396, 3.3019, 2.9623, 3.5472, 2.8868, 3.0189, 3.0, 2.566, 2.717, 3.0377, 3.2453, 2.9623, 3.2264, 2.8679],
-        "desv": [0.7366, 0.4497, 0.7029, 0.7029, 0.5296, 1.2286, 0.8255, 0.6212, 0.7486, 0.9855, 0.8934, 0.6547, 1.0633, 1.2037, 1.0509, 1.0532, 0.7757, 0.7911, 1.0087, 0.7664, 1.2538, 1.1073, 1.2439, 1.2814, 1.1554, 0.9309, 0.9498, 1.0809, 1.0396, 1.1981]
-    },
-    "Normal": {
-        "prior": 0.33,
-        "media": [1.3962, 1.5283, 1.2075, 1.434, 1.8868, 1.0943, 1.2642, 1.7736, 1.6226, 2.0943, 1.3774, 1.6981, 1.1887, 0.9623, 1.0189, 1.2075, 1.7925, 1.8491, 0.8679, 2.1321, 0.7547, 1.4717, 1.3774, 0.9623, 1.6604, 1.8868, 1.566, 1.5094, 1.8491, 1.3962],
-        "desv": [0.9182, 0.9636, 1.0161, 1.0002, 0.9247, 0.9569, 0.8934, 0.7683, 0.9158, 0.8302, 1.201, 0.8146, 0.848, 1.0087, 0.8576, 0.9389, 1.0161, 1.1057, 1.0101, 0.972, 0.822, 1.002, 0.9948, 1.0809, 0.7509, 0.8164, 1.2665, 0.9639, 1.071, 1.187]
-    },
-    "Bajo": {
-        "prior": 0.33,
-        "media": [0.0943, 0.3774, 0.1132, 0.2453, 0.6981, 0.0, 0.2642, 0.6792, 0.3585, 0.5283, 0.0755, 0.6792, 0.2642, 0.0, 0.1698, 0.3019, 0.4528, 0.5283, 0.1132, 1.0189, 0.1698, 0.4151, 0.5472, 0.1132, 0.566, 0.9811, 0.6604, 0.6792, 0.8302, 0.3208],
-        "desv": [0.351, 0.6509, 0.3168, 0.4303, 1.2067, 0.1667, 0.6487, 0.8638, 0.5527, 0.9636, 0.2642, 0.6376, 0.4409, 0.1667, 0.3755, 0.6612, 0.8142, 0.6326, 0.3168, 0.9415, 0.5042, 0.7632, 0.9021, 0.3168, 0.8797, 0.7889, 0.8675, 0.8417, 0.8408, 0.6073]
-    }
+    "Alto": {"prior": 0.33, "media": [...], "desv": [...]},
+    "Normal": {"prior": 0.33, "media": [...], "desv": [...]},
+    "Bajo": {"prior": 0.33, "media": [...], "desv": [...]}
 }
 
-# Función para clasificación Naive Bayes
+# Airtable
+AIRTABLE_TOKEN = st.secrets["AIRTABLE_TOKEN"]
+BASE_ID = st.secrets["AIRTABLE_BASE_ID"]
+TABLE_NAME = st.secrets["AIRTABLE_TABLE_NAME"]
+
+# Clasificación
 
 def probabilidad_gaussiana(x, mu, sigma):
     if sigma == 0:
@@ -79,14 +72,37 @@ def clasificar_naive_bayes(respuestas):
     clase_predicha = max(log_probabilidades, key=log_probabilidades.get)
     return log_probabilidades, clase_predicha
 
+# Interpretaciones
+interpretaciones = {
+    "Alto": """### 🧠 Perfil: Ansiedad Alta ...""",
+    "Normal": """### 🧠 Perfil: Ansiedad Moderada ...""",
+    "Bajo": """### 🧠 Perfil: Ansiedad Baja ..."""
+}
+
+# Guardar en Airtable
+
+def guardar_en_airtable(respuestas, clase):
+    data = {campos_airtable[atributos[i]]: respuestas[i] for i in range(len(respuestas))}
+    data["Resultado"] = clase
+    data["Fecha"] = datetime.datetime.now().isoformat()
+
+    headers = {
+        "Authorization": f"Bearer {AIRTABLE_TOKEN}",
+        "Content-Type": "application/json"
+    }
+    url = f"https://api.airtable.com/v0/{BASE_ID}/{TABLE_NAME}"
+    r = requests.post(url, headers=headers, json={"fields": data})
+    return r.status_code, r.text
+
+# Interfaz
 st.title("🔍 Sistema Experto: Clasificación de Ansiedad Académica")
 st.write("Responde cada reactivo del cuestionario con un valor de 0 (muy en desacuerdo) a 5 (muy de acuerdo).")
 
 respuestas_usuario = []
 
 with st.form("cuestionario"):
-    for clave, texto in campos_airtable.items():
-        val = st.slider(texto, 0, 5, 3)
+    for atributo in atributos:
+        val = st.slider(campos_airtable[atributo], 0, 5, 3)
         respuestas_usuario.append(val)
     submitted = st.form_submit_button("Clasificar")
 
@@ -98,55 +114,10 @@ if submitted:
         st.write(f"**{clase_nombre}**: log-prob = {logp:.4f}")
 
     st.success(f"✅ Clasificación final: **{clase}**")
+    st.markdown(interpretaciones[clase])
 
-    # Mostrar perfil personalizado
-    if clase == "Alto":
-        st.markdown("""
-        ### 🛑 Perfil: Nivel *Alto*
-        **Factor: Ansiedad por Participación Oral / Expresión Verbal**
-
-        Tu perfil indica un nivel **alto** de ansiedad asociada con situaciones en las que necesitas hablar en público, participar en clase o expresar tus ideas.
-
-        - Tiendes a pensar que tus preguntas u opiniones no son válidas o que los demás se burlarán de ti.  
-        - Evitas participar o preguntar por miedo a no ser entendido o a equivocarte.  
-        - Las exposiciones, debates o conferencias generan en ti un temor significativo, incluso si has preparado el tema.  
-        - Percibes que careces de autoridad o que no podrás responder preguntas, lo cual afecta tu confianza.  
-        - Puedes sentir que los profesores o compañeros te juzgan negativamente.
-
-        🧠 **Sugerencia:** Este nivel de ansiedad puede interferir con tu rendimiento académico. Sería útil trabajar estrategias de afrontamiento, práctica controlada de exposición oral y posiblemente acompañamiento psicológico para reducir estas percepciones y mejorar tu seguridad al hablar.
-        """)
-    elif clase == "Normal":
-        st.markdown("""
-        ### 🟡 Perfil: Nivel *Normal*
-        **Factor: Ansiedad por Participación Oral / Expresión Verbal**
-
-        Tu perfil indica un nivel **moderado** o **normal** de ansiedad en contextos de participación oral.
-
-        - Puedes sentir nervios o inseguridad en situaciones sociales o académicas, pero generalmente puedes afrontarlas.  
-        - Es posible que ocasionalmente dudes de tus respuestas o evites hablar en público, pero no de forma constante.  
-        - El miedo a ser evaluado existe, pero no paraliza tu participación.
-
-        💡 **Sugerencia:** Puedes beneficiarte de seguir practicando la expresión oral, reforzando tu confianza y exponiéndote a estos contextos poco a poco.
-        """)
+    code, msg = guardar_en_airtable(respuestas_usuario, clase)
+    if code == 200:
+        st.info("📝 Las respuestas han sido guardadas en Airtable correctamente.")
     else:
-        st.markdown("""
-        ### 🟢 Perfil: Nivel *Bajo*
-        **Factor: Ansiedad por Participación Oral / Expresión Verbal**
-
-        Tu perfil indica un nivel **bajo** de ansiedad en situaciones que implican participación verbal.
-
-        - Te sientes cómodo expresando tus ideas en clase, en exposiciones o debates.  
-        - No temes equivocarte ni ser evaluado negativamente por tus compañeros o profesores.  
-        - Sueles confiar en tu conocimiento y no te preocupa en exceso lo que piensen los demás.
-
-        🌟 **Sugerencia:** Este es un perfil muy favorable. Puedes usar tu seguridad y habilidades comunicativas para apoyar a otros compañeros, participar activamente y convertirte en un líder dentro de tu grupo académico.
-        """)
-
-    guardar_en_airtable(respuestas_usuario, clase)
-
-    st.markdown("""
-    ---
-    #### ℹ️ ¿Qué significa *log-prob*?
-    El modelo usa logaritmos para calcular probabilidades de forma más estable.
-    El valor más cercano a cero (menos negativo) indica la clase más probable.
-    """)
+        st.error(f"❌ Error al guardar en Airtable: {code} - {msg}")
