@@ -118,9 +118,23 @@ if submitted:
     st.success(f"✅ Clasificación final: **{clase}**")
     guardar_en_airtable(respuestas_usuario, clase)
 
+    # Interpretación de perfil
+    perfiles = {
+        "Alto": "Tu perfil sugiere un nivel **alto** de ansiedad académica asociada a la expresión oral. Es probable que experimentes temor constante al juicio de los demás, incluso cuando estás preparado, y evites participar o exponer por miedo al ridículo o la desaprobación.",
+        "Normal": "Tu perfil indica un nivel **moderado o normal** de ansiedad académica. Puedes experimentar algunas dudas o inseguridades en contextos académicos orales, pero no son persistentes ni interfieren gravemente en tu desempeño.",
+        "Bajo": "Tu perfil refleja un nivel **bajo** de ansiedad académica en contextos de expresión oral. Es probable que te sientas cómodo participando, exponiendo o dialogando en clase sin temor significativo al juicio de los demás."
+    }
+
+    st.markdown("""
+    ---
+    ### 🧠 Interpretación de tu perfil
+    """ + perfiles[clase])
+
     st.markdown("""
     ---
     #### ℹ️ ¿Qué significa *log-prob*?
     El modelo usa logaritmos para calcular probabilidades de forma más estable.
     El valor más cercano a cero (menos negativo) indica la clase más probable.
+
+    Dr. José Manuel Sánchez Sordo, Unidad de Evaluación Psicológica Iztacala, UNAM 2025.
     """)
