@@ -40,7 +40,7 @@ enunciados = [
 
 campos_airtable = {f"item_{i+1}": texto for i, texto in enumerate(enunciados)}
 atributos = list(campos_airtable.keys())
-
+#Modelo de aprendizaje automático bayesiano
 parametros = {
     "Alto": {
         "prior": 0.33,
